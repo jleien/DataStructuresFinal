@@ -1,7 +1,35 @@
+# --------------------------------------------------------------
+# Name: arrayBasedList
+# Author: Jake Leiendecker
+# Created: 10/17/22
+# Course: CIS 152 Data Structures
+# Version 1.1
+# OS: Windows 10
+# IDE: PyCharm
+# Copyright: This is my own original work
+# based on specifications issued by our instructor
+# Description: A program that allows the user to create events and allow staff to sign up for said events.
+# It also allows for the generation of events based on who has signed up for events.
+# Testing was done via print statements inside of the main code as writing unit tests for tKinter GUI is incredibly
+# difficult and the tests I wrote in the code served their purpose.
+# Academic Honesty: I attest that this is my original work
+# I have not used unauthorized source code, either modified
+# or unmodified, I have not given other fellow student(s) access
+# to my program. That would make me a square.
+# ---------------------------------------------------------------
+
 from tkinter import *
 from tkinter import ttk
 from tkinter.scrolledtext import *
-from collections import deque
+
+
+class Node:
+    def __init__(self, staff, priority):
+        self.staff = staff
+        self.priority = priority
+
+    def __str__(self):
+        return f'{self.staff}'
 
 
 class PriorityQueue:
@@ -13,26 +41,27 @@ class PriorityQueue:
         return self.size() == 0
 
     def enqueue(self, node):
-        print(node)
-        if not self.is_empty():
+        print("Node is:")  # test
+        print(node)  # test
+        if self.is_empty():
             self.queue.append(node)
         else:
             for x in range(0, self.size()):
                 if node.priority >= self.queue[x].priority:
                     if x == (self.size() - 1):
-                        self.queue.enqueue(x + 1, node)
+                        self.queue.append(node)
                     else:
                         continue
                 else:
-                    self.queue.enqueue(x, node)
+                    self.queue.append(node)
                     return True
 
     def dequeue(self):
         return self.queue.pop(0)
 
-    def print(self):
-        for x in self.queue:
-            print(str(x.priority))
+    def __str__(self):
+        global staffResult
+        return staffResult.join(map(str, self.queue))
 
     def size(self):
         return len(self.queue)
@@ -64,6 +93,10 @@ class LinkedList:
     def size(self):
         return self.head + 1
 
+    def __str__(self):
+        global staffResult
+        return staffResult.join(map(str, self.items))
+
     def print(self):
         if self.is_empty():
             raise LinkedList
@@ -73,11 +106,14 @@ class LinkedList:
 
 class Staff:
     def __init__(self, priority, lastName, firstName, role, event):
+        self.priority = priority
         self.lastName = lastName
         self.firstName = firstName
         self.role = role
         self.event = event
-        self.priority = priority
+
+    def __str__(self):
+        return f'Name: {self.firstName} {self.lastName}\nRole: {self.role}\nEvent: {self.event}\nPriority: {self.priority}\n'
 
 
 class Event:
@@ -88,13 +124,14 @@ class Event:
         self.staffRequired = staffRequired
 
     def __str__(self):
-        return f'{self.name}'
+        return f' {self.name}, {self.location}, {self.date}, Staff Required: {self.staffRequired}'
+
 
 
 # declare
-
+staffResult = ""
 priorityCount = 0
-staffList = PriorityQueue()
+staffList = PriorityQueue()  # staff list initialized
 eventList = LinkedList()
 eventListForDropdown = []
 base = Event("Shop Shift", "Retail Location", "Monday-Friday", "2")
@@ -107,20 +144,26 @@ def submitStaff():
     priorityCount = priorityCount + 1
     priority = priorityCount
     first_name = firstname.get()
+    print("Staff Name is:")  # test
     print(str(first_name))  # test
     last_name = lastname.get()
     role = roleclicked.get()
     event = eventclicked.get()
-    print(str(event))
-    s = Staff(priority, first_name, last_name, role, event)
-    print(str(priority))
+    print("Event Name for Staff is:")  # test
+    print(str(event))  # test
+    s = Staff(priority, last_name, first_name, role, event)
+    print("Priority is:")  # test
+    print(str(priority))  # test
     staffList.enqueue(s)
+    print("Staff List is:")  # test
+    print(staffList)  # test
 
 
 def submitEvent():
     global eventListForDropdown
 
     event_name = eventName.get()
+    print("Event Name is:")
     print(str(event_name))  # test
     location = eventLocation.get()
     date = eventDate.get()
@@ -128,7 +171,7 @@ def submitEvent():
     e = Event(event_name, location, date, staff)
     eventListForDropdown.append(e)  # LinkedLists are not able to be used in dropdowns, so there is a separate list
     eventList.insert(e)
-    print(str(eventListForDropdown))
+
 
 
 def refresh1():
@@ -140,16 +183,8 @@ def refresh1():
     drop2.grid(row=1, column=2)
 
 
-def refresh2():
-    global drop3
-    drop3.destroy()
-    # events dropdown
-    # Create Dropdown menu
-    drop3 = OptionMenu(tab3, eventclicked2, *eventListForDropdown)
-    drop3.grid(row=1, column=2)
-
-
 def insertionSort(arr):
+    print(arr)
     for i in range(1, len(arr)):
         key = arr[i]
         j = i - 1
@@ -161,10 +196,8 @@ def insertionSort(arr):
 
 
 def generateReport():
-    sortedStaffList = []
-    sortedStaffList = insertionSort(staffList.queue)
-    for x in sortedStaffList:
-        print(x)
+    staffResult = PriorityQueue.__str__(staffList)
+    eventStaffListResult.config(text=staffResult)
 
 
 main = Tk()
@@ -261,58 +294,16 @@ event_btn = Button(tab2, text="Create Event", command=lambda: submitEvent())
 event_btn.grid(row=6, column=2)
 
 # Event Generation GUI
-# events dropdown
-# datatype of menu text
-eventclicked2 = StringVar(tab3)
-# initialize menu text to none
-eventclicked2.set("None Selected")
-# Create Dropdown menu
-drop3 = OptionMenu(tab3, eventclicked2, *eventListForDropdown)
-drop3.grid(row=1, column=2)
-
-evlabel = Label(tab3, text="Select Event to Generate Report: ")
-evlabel.grid(row=1, column=1)
-
-refresh_button = Button(tab3, text="Refresh", command=lambda: refresh2())
-refresh_button.grid(row=1, column=3)
 
 report_btn = Button(tab3, text="Generate Event Report", command=lambda: generateReport())
-report_btn.grid(row=2, column=2)
+report_btn.grid(row=1, column=2)
 
-evName = Label(tab3, text="Event Name: ")
-evName.grid(row=3, column=1)
 
-evLocation = Label(tab3, text="Event Location: ")
-evLocation.grid(row=4, column=1)
+eventStaffList = Label(tab3, text="Event List: ")
+eventStaffList.grid(row=2, column=1)
 
-evDate = Label(tab3, text="Event Date: ")
-evDate.grid(row=5, column=1)
+eventStaffListResult = Label(tab3, text="Waiting...")
+eventStaffListResult.grid(row=3, column=2)
 
-eventstaffreq = Label(tab3, text="Staff Required: ")
-eventstaffreq.grid(row=6, column=1)
-
-staffhired = Label(tab3, text="Staff Scheduled: ")
-staffhired.grid(row=7, column=1)
-
-staffwait = Label(tab3, text="Staff Waitlisted: ")
-staffwait.grid(row=8, column=1)
-
-evNameResult = Label(tab3, text="Waiting...")
-evNameResult.grid(row=3, column=2)
-
-evLocationResult = Label(tab3, text="Waiting...")
-evLocationResult.grid(row=4, column=2)
-
-evDateResult = Label(tab3, text="Waiting...")
-evDateResult.grid(row=5, column=2)
-
-eventstaffreqResult = Label(tab3, text="Waiting...")
-eventstaffreqResult.grid(row=6, column=2)
-
-staffhiredResult = Label(tab3, text="Waiting...")
-staffhiredResult.grid(row=7, column=2)
-
-staffwaitResult = Label(tab3, text="Waiting...")
-staffwaitResult.grid(row=8, column=2)
 
 main.mainloop()
